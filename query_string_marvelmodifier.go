@@ -37,6 +37,8 @@ func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	query.Set("apikey", m.public)
 	query.Set("ts", ts)
 	query.Set("hash", hash)
+	fmt.Println(m.private)
+	fmt.Println(m.public)
 	req.URL.RawQuery = query.Encode()
 
 	return nil
