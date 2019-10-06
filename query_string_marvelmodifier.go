@@ -39,6 +39,7 @@ func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	query.Set("hash", hash)
 	fmt.Println(m.private)
 	fmt.Println(m.public)
+	fmt.Println("打印公钥和私钥")
 	req.URL.RawQuery = query.Encode()
 
 	return nil
