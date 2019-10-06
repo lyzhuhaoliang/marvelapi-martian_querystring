@@ -34,6 +34,7 @@ func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	header := req.Header
 	header.Add("sso","sso")
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
+	fmt.Println("增加了新的内容")
 	fmt.Println("进入自己的程序中, 就开始进行校验")
 	hash := GetMD5Hash(ts + m.private + m.public)
 	query.Set("apikey", m.public)
