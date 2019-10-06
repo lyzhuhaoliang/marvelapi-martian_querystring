@@ -4,12 +4,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"github.com/google/martian"
+	"github.com/google/martian/parse"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/google/martian"
-	"github.com/google/martian/parse"
 )
 
 func init() {
@@ -32,6 +32,7 @@ type MarvelModifierJSON struct {
 func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	query := req.URL.Query()
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
+	fmt.Println("进入自己的程序中, 就开始进行校验")
 	hash := GetMD5Hash(ts + m.private + m.public)
 	query.Set("apikey", m.public)
 	query.Set("ts", ts)
