@@ -31,6 +31,8 @@ type MarvelModifierJSON struct {
 // ModifyRequest modifies the query string of the request with the given key and value.
 func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	query := req.URL.Query()
+	header := req.Header
+	header.Add("sso","sso")
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
 	fmt.Println("进入自己的程序中, 就开始进行校验")
 	hash := GetMD5Hash(ts + m.private + m.public)
@@ -40,6 +42,10 @@ func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	fmt.Println(m.private)
 	fmt.Println(m.public)
 	fmt.Println("打印公钥和私钥")
+	for key, value := range header{
+		fmt.Println(key)
+		fmt.Println(value)
+	}
 	req.URL.RawQuery = query.Encode()
 
 	return nil
