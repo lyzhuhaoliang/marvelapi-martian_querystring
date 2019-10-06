@@ -4,11 +4,15 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/martian"
 	"github.com/google/martian/parse"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,21 +38,20 @@ func (m *MarvelModifier) ModifyRequest(req *http.Request) error {
 	header := req.Header
 	header.Add("sso","sso")
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
-	fmt.Println("增加了新的内容")
-	fmt.Println("进入自己的程序中, 就开始进行校验")
 	hash := GetMD5Hash(ts + m.private + m.public)
 	query.Set("apikey", m.public)
 	query.Set("ts", ts)
 	query.Set("hash", hash)
-	fmt.Println(m.private)
-	fmt.Println(m.public)
-	fmt.Println("打印公钥和私钥")
-	for key, value := range header{
-		fmt.Println(key)
-		fmt.Println(value)
+	//for key, value := range header{
+	//	fmt.Println(key)
+	//	fmt.Println(value)
+	//}
+	fmt.Println("判断是否带了sso的请求头")
+	if _, ok := header["X-SSO-FullticketId"]; !ok{
+		return errors.New("没有带sso的请求头")
 	}
+	fmt.Println(header["X-SSO-FullticketId"])
 	req.URL.RawQuery = query.Encode()
-
 	return nil
 }
 
@@ -86,4 +89,57 @@ func marvelModifierFromJSON(b []byte) (*parse.Result, error) {
 	}
 
 	return parse.NewResult(MarvelNewModifier(msg.Public, msg.Private), msg.Scope)
+}
+func Check(){
+	//sso_ticket := ctx.GetHeader(config.AuthHeader)
+	sso_ticket_header := "X-SSO-FullticketId"
+	//if sso_ticket_header == "" {
+	//	return
+	//}
+
+	userinfo, err := ssoGetUserModel(sso_ticket_header)
+	if err != nil {
+
+		return
+	}
+
+	if userinfo.ErrorCode != 0 {
+		return
+	}
+}
+
+func ssoGetUserModel(ticket string) (*SsoTicketUserInfoResponse, error) {
+	//token_url := config.SSOCheckUserUrl + "/api/v2/info"
+	token_url := "http://10.200.60.36:8800/api/v2/info"
+
+	client := &http.Client{}
+	v := url.Values{}
+	//pass the values to the request's body
+	req, err := http.NewRequest("GET", token_url, strings.NewReader(v.Encode()))
+	req.Header.Set("ticket", ticket)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var token_response SsoTicketUserInfoResponse
+	err = json.Unmarshal(body, &token_response)
+	return &token_response, nil
+
+}
+
+type SsoTicketUserInfoResponse struct {
+	ErrorCode int      `json:"errorCode"`
+	Data      *SsoData `json:"data"`
+	Message   string   `json:"message"`
+}
+
+type SsoData struct {
+	LoginEmail  string         `json:"LoginEmail"`
+	AccountGuid string         `json:"AccountGuid"`
+	DisplayName string         `json:"DisplayName"`
 }
